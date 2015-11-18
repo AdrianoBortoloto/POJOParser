@@ -1,6 +1,6 @@
 package br.com.involves.javachallenge;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  *
@@ -8,11 +8,11 @@ import java.util.List;
  */
 public interface Parsable {
 
-    public <T> String parse(T object);
+    public String parse(Object object);
 
-    public <T> String parse(List<T> arrayObject);
+    public <T extends Collection> String parse(T collection);
 
-    public static <T> Boolean isNumeric(T value) {
+    public static Boolean isNumeric(Object value) {
         try {
             Double.parseDouble(value.toString());
         } catch (NumberFormatException nfe) {

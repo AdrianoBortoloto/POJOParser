@@ -41,17 +41,19 @@ public class JSONArrayFormatTest {
      */
     @Test
     public void testToWrapperArray() {
+        
+        Object[] wrapped;
+        wrapped = toWrapperArray(new int[]{1, 2, 3, 4, 5});
+        assertArrayEquals(new Object[]{1, 2, 3, 4, 5}, wrapped);
 
-        int[] intArray = new int[]{1, 2, 3, 4, 5};
-        Integer[] wrappedInt = toWrapperArray(intArray);
-        assertArrayEquals(new Integer[]{1, 2, 3, 4, 5}, wrappedInt);
+        wrapped = toWrapperArray(new char[]{'1', 'a', '%'});
+        assertArrayEquals(new Object[]{'1', 'a', '%'}, wrapped);
+        
+        wrapped = toWrapperArray(new Object[]{1, 'a', "obj"});
+        assertArrayEquals(new Object[]{1, 'a', "obj"}, wrapped);
 
-        char[] charArray = new char[]{'1', 'a', '%'};
-        Character[] wrappedChar = toWrapperArray(charArray);
-        assertArrayEquals(new Character[]{'1', 'a', '%'}, wrappedChar);
-
-        Double[] dblArray = toWrapperArray(null);
-        assertArrayEquals(null, dblArray);
+        wrapped = toWrapperArray(null);
+        assertArrayEquals(null, wrapped);
     }
 
     /**
@@ -82,11 +84,20 @@ public class JSONArrayFormatTest {
      */
     @Test
     public void testParse_GenericType() {
-        String[] arrayObject = new String[]{"1", "a", "!"};
+        
         JSONArrayFormat instance = new JSONArrayFormat();
-        String expResult = "[1, \"a\", \"!\"]";
-        String result = instance.parse(arrayObject);
-        System.out.println("parseGeneric: " + result);
+        String expResult, result;
+        String[] arrayString = new String[]{"1", "a", "!", null};
+        
+        expResult = "[1, \"a\", \"!\", null]";
+        result = instance.parse(arrayString);
+        System.out.println("parseGenericString: " + result);
+        assertEquals(expResult, result);
+        
+        float[] arrayFloat = new float[]{2.34f, 3.1415f, 500f};
+        expResult = "[2.34, 3.1415, 500.0]";
+        result = instance.parse(arrayFloat);
+        System.out.println("parseGenericFloat: " + result);
         assertEquals(expResult, result);
     }
 
@@ -100,8 +111,9 @@ public class JSONArrayFormatTest {
         object.add("q");
         object.add("w");
         object.add("25");
+        object.add(null);
         JSONArrayFormat instance = new JSONArrayFormat();
-        String expResult = "[\"q\", \"w\", 25]";
+        String expResult = "[\"q\", \"w\", 25, null]";
         String result = instance.parse(object);
         System.out.println("parseList: " + result);
         assertEquals(expResult, result);

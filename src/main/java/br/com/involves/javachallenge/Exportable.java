@@ -8,6 +8,6 @@ import java.io.OutputStream;
  */
 public interface Exportable {
 
-    public <T> OutputStream export(T obj);
+    public OutputStream export(Object obj);
 
 }

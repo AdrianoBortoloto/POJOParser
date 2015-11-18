@@ -9,6 +9,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,12 +22,12 @@ import javax.swing.JFileChooser;
 public final class JSONFormat implements Parsable, Exportable {
 
     @Override
-    public <T> String parse(T pojo) {
+    public String parse(Object pojo) {
         String parsed;
-        List<T> members = getProperties(pojo);
+        List<String> members = getProperties(pojo);
         StringBuilder buildBlock = new StringBuilder();
         buildBlock.append("{\n");
-        for (T member : members) {
+        for (String member : members) {
             buildBlock.append(member);
         }
         buildBlock.append("}");
@@ -38,13 +39,13 @@ public final class JSONFormat implements Parsable, Exportable {
 
     }
 
-    public static <T> String formatMembers(String name, T value) {
+    public static String formatMembers(String name, Object value) {
         name = "\"" + name + "\": ";
         String member;
         if (value.getClass().isArray() || Parsable.isNumeric(value)) {
             member = name + value;
         } else {
-            member = name + "\"" + value;
+            member = name + "\"" + value + "\"";
         }
 
         member = member
@@ -55,7 +56,7 @@ public final class JSONFormat implements Parsable, Exportable {
     }
 
     @Override
-    public final String parse(List pojoList) {
+    public <T extends Collection> String parse(T pojoList) {
         StringBuilder sb = new StringBuilder();
         for (Object element : pojoList) {
             sb.append(parse(element));
@@ -70,17 +71,17 @@ public final class JSONFormat implements Parsable, Exportable {
     }
 
     @Override
-    public <T> OutputStream export(T pojo) {
+    public OutputStream export(Object pojo) {
         Charset charset = Charset.forName("UTF-8");
         OutputStream output = null;
         try {
             //encode
-            output = new FileOutputStream(choosePathToExport());
+            String fileName = pojo.getClass().getSimpleName().concat(".json");
+            output = new FileOutputStream(choosePathToExport() + "\\" + fileName);
             String parsed = parseToJSON(pojo);
             byte[] encoded = parsed.getBytes(charset);
             output.write(encoded);
             output.flush();
-            export(pojo);
             return output;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(JSONFormat.class.getName()).log(Level.SEVERE, null, ex);
@@ -100,14 +101,14 @@ public final class JSONFormat implements Parsable, Exportable {
     }
 
     public static File choosePathToExport() {
-        JFileChooser pathChooser = null;
+        JFileChooser pathChooser;
         String curDir;
         try {
             pathChooser = new JFileChooser();
             curDir = new File(".").getCanonicalPath();
             pathChooser.setCurrentDirectory(new File(curDir));
             pathChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            pathChooser.setDialogTitle("Select path to export JSON file!");
+            pathChooser.setDialogTitle("Select path to JSON file!");
             int option = pathChooser.showOpenDialog(pathChooser);
             if (option == JFileChooser.APPROVE_OPTION) {
                 return pathChooser.getSelectedFile();
@@ -120,17 +121,17 @@ public final class JSONFormat implements Parsable, Exportable {
         }
     }
 
-    public <T> List<T> getProperties(T pojo) {
-        String name;
-        List<T> properties = new ArrayList<>();
+    private List<String> getProperties(Object pojo) {
+
+        List<String> properties = new ArrayList<>();
         try {
             Class<?> pojoClass = pojo.getClass();
-            Field[] fields = pojoClass.getDeclaredFields();
-            AccessibleObject.setAccessible(fields, true);
+            Field[] pojoFields = pojoClass.getDeclaredFields();
+            AccessibleObject.setAccessible(pojoFields, true);
             StringBuilder buildPairs = new StringBuilder();
 
-            for (Field field : fields) {
-                name = field.getName();
+            for (Field field : pojoFields) {
+                String name = field.getName();
                 Object value = field.get(pojo);
                 if (value.getClass().isArray()) {
                     value = JSONArrayFormat.getFormattedArray(value);
@@ -138,7 +139,7 @@ public final class JSONFormat implements Parsable, Exportable {
                 String jsonMembers = JSONFormat.formatMembers(name, value);
                 buildPairs.append(jsonMembers).append(",\n");
             }
-            properties.add((T) buildPairs.toString());
+            properties.add(buildPairs.toString());
 
         } catch (IllegalAccessException ex) {
         } catch (IllegalArgumentException ex) {

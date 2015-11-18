@@ -1,7 +1,7 @@
 package br.com.involves.javachallenge;
 
 import java.lang.reflect.Array;
-import java.util.List;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,19 +12,19 @@ import java.util.logging.Logger;
 public class JSONArrayFormat implements Parsable {
 
     @Override
-    public <T> String parse(T arrayObject) {
+    public String parse(Object arrayObject) {
         if (arrayObject == null) {
             return null;
         } else {
-            T[] formattedArray = toWrapperArray(arrayObject);
+            Object[] formattedArray = toWrapperArray(arrayObject);
             if (formattedArray == null) {
                 return null;
             } else {
                 String parsed;
                 StringBuilder sb = new StringBuilder();
                 sb.append("[");
-                for (T element : formattedArray) {
-                    sb.append(getFormattedValueFromArray((T) element));
+                for (Object element : formattedArray) {
+                    sb.append(getFormattedValueFromArray(element)).append(", ");
                 }
                 sb.append("]");
                 parsed = sb.toString()
@@ -38,11 +38,11 @@ public class JSONArrayFormat implements Parsable {
     }
 
     @Override
-    public <T> String parse(List<T> arrayObject) {
+    public <T extends Collection> String parse(T arrayObject) {
         return parse(arrayObject.toArray());
     }
 
-    public static <T> T[] toWrapperArray(Object valueObject) { //public to @Test
+    public static Object[] toWrapperArray(Object valueObject) { //public to @Test
         if (valueObject == null) {
             return null;
         } else {
@@ -52,7 +52,7 @@ public class JSONArrayFormat implements Parsable {
                 Logger.getLogger(JSONArrayFormat.class.getName()).log(Level.SEVERE, errMsg);
                 throw new IllegalArgumentException(errMsg);
             } else if (!objClass.getComponentType().isPrimitive()) {
-                return (T[]) valueObject; //if not a primitive array, only a cast is needed.
+                return (Object[]) valueObject; //if not a primitive array, only a cast is needed.
             } else {
                 int length = Array.getLength(valueObject);
                 if (length == 0) {
@@ -60,12 +60,12 @@ public class JSONArrayFormat implements Parsable {
                     Logger.getLogger(JSONArrayFormat.class.getName()).log(Level.SEVERE, errMsg);
                     throw new IllegalArgumentException(errMsg);
                 }
-                T element;
-                T[] wrappedArray = null;
+                Object element;
+                Object[] wrappedArray = null;
                 for (int i = 0; i < length; i++) {
-                    element = (T) Array.get(valueObject, i);
+                    element = Array.get(valueObject, i);
                     if (wrappedArray == null) {
-                        wrappedArray = (T[]) Array.newInstance(element.getClass(), length);
+                        wrappedArray = (Object[]) Array.newInstance(element.getClass(), length);
                     }
                     wrappedArray[i] = element;
                 }
@@ -74,19 +74,19 @@ public class JSONArrayFormat implements Parsable {
         }
     }
 
-    private static <T> String getFormattedValueFromArray(T value) {
+    private static String getFormattedValueFromArray(Object value) {
         try {
             if (!value.getClass().isArray() && !Parsable.isNumeric(value)) {
-                return "\"" + value + "\"" + ", ";
+                return "\"" + value + "\"";
             } else {
-                return value + ", ";
+                return value.toString();
             }
         } catch (NullPointerException npe) {
-            return "null, ";
+            return "null";
         }
     }
 
-    public static <T> String getFormattedArray(T arrayValue) {//public to test
+    public static String getFormattedArray(Object arrayValue) {//public to test
         JSONArrayFormat j = new JSONArrayFormat();
         return j.parse(arrayValue);
     }
