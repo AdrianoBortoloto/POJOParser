@@ -1,3 +1,3 @@
 # POJOParser
-Java Challenge Involves
-(11/11/2015)
+Involves
+Java Challenge (11/11/2015)
